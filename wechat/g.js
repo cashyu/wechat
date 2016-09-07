@@ -4,90 +4,18 @@
 'use strict'
 
 var sha1 = require('sha1');
-var Promise = require('bluebird');
-var request = Promise.promisify(require('request'));    //将request进行promise化
-
-
-var prefix = 'https://api.weixin.qq.com/cgi-bin/';
-var api = {
-    accessToken:prefix +
-    'token?grant_type=client_credential'
-};
-
-function Wechat(opts){
-    var that = this;
-    this.appID = opts.appID;
-    this.appSecret = opts.appSecret;
-    this.getAccessToken = opts.getAccessToken;
-    this.saveAccessToken = opts.saveAccessToken;
-
-    this.getAccessToken()
-        .then(function(data){
-            try {
-                data = JSON.parse(data);
-            }
-            catch(e){
-                return that.updateAccessToken(data);
-            }
-
-            if(that.isValidAccessToken(data)){
-                Promise.resolve(data)
-            }else{
-                return that.updateAccessToken();
-            }
-        })
-        .then(function(data){
-
-            that.access_token = data.access_token;
-            that.expires_in = data.expires_in;
-
-            that.saveAccessToken(data);
-        })
-}
-
-Wechat.prototype.isValidAccessToken = function(data){
-    if(!data || !data.access_token || !data.expires_in){
-        return false;
-    }else{
-        var access_token = data.access_token;
-        var expires_in = data.expires_in;
-        var now = (new Date().getTime());
-
-        if(now < expires_in){
-            return true;
-        }else{
-            return false;
-        }
-    }
-};
-
-Wechat.prototype.updateAccessToken = function(){
-    var appID = this.appID;
-    var appSecret = this.appSecret;
-    var url = api.accessToken + '&appid=' + appID + '&secret=' + appSecret;
-
-    return new Promise(function(resolve,reject){
-        request({url:url,json:true}) //向服务器发起请求(GET,POST.....)
-            .then(function(response){
-                var data = response.body;
-                console.log("+++++++++++");
-                console.log(data);
-                var now = (new Date().getTime());
-                var expires_in = now + (data.expires_in - 20)*1000; //考虑延时，提前20s刷新token
-
-                data.expires_in = expires_in;
-
-                resolve(data);
-            })
-    })
-}
+var getRawBody = require('raw-body');
+var Wechat = require('./wechat');
+var util = require('./util');
 
 
 
 module.exports = function(opts){
-    var wechat = new Wechat(opts); //new出的Wechat，管理票据和微信接口
-
+//    var wechat = new Wechat(opts); //new出的Wechat，管理票据和微信接口
+    
     return function *(next){
+        var that = this;
+        console.log("------------");
         console.log(this.query);
         var token = opts.token;
         var signature = this.query.signature;
@@ -97,11 +25,54 @@ module.exports = function(opts){
         var str = [token,timestamp,nonce].sort().join('');
         var sha = sha1(str);
 
-        if(sha === signature){
-            this.body = echostr + '';
-        }else{
-            this.body = "wrong";
+        if(this.method === 'GET'){
+            if(sha === signature){
+                this.body = echostr + '';
+            }else{
+                this.body = "wrong";
+            }
+        }else if(this.method === 'POST'){
+             if(sha !== signature){
+                this.body = "wrong";
+                return false;
+            }else{
+                //获取原始的XML数据
+                var data = yield getRawBody(this.req,{
+                    length:this.length, //POST过来的数据的长度
+                    limit:'1mb',    //最大post过来数据的大小
+                    encoding:this.charset   //编码，设置为当前的charset
+                });
+                
+                //新建一个util.js文件（工具包文件），存放常用的方法
+                //parseXMLAsync方法解析xml，返回一个解析后的xml的对象
+                var content = yield util.parseXMLAsync(data)    //parseXMLAsync方法返回一个Promise对象
+                console.log("$$$$$$$$$$$$$$$");
+                console.log(content);
+                
+                //上面返回的解析后的XML对象还不是标准的key-value的形式，所以还需要格式化
+                var message = util.formatMessage(content.xml);
+                console.log(message);
+
+                if(message.MsgType === 'event'){        //POST过来的是一个事件
+                    if(message.Event === 'subscribe'){  // 如果是订阅事件
+                        var now = new Date().getTime();
+                        
+                        that.status = 200;
+                        that.type = 'application/xml';
+                        that.body = '<xml>'+
+                            '<ToUserName><![CDATA['+ message.FromUserName + ']]></ToUserName>' +
+                            '<FromUserName><![CDATA['+ message.ToUserName + ']]></FromUserName>' +
+                            '<CreateTime>'+ now +'</CreateTime>' +
+                            '<MsgType><![CDATA[text]]></MsgType>' +
+                            '<Content><![CDATA[hi,你好!]]></Content>'+
+                            '</xml>';
+                        return ;
+                    }
+                }
+            }
         }
+
+        
 
     }
 };
