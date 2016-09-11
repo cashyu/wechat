@@ -53,22 +53,26 @@ module.exports = function(opts){
                 var message = util.formatMessage(content.xml);
                 console.log(message);
 
+                this.wexin= message;
+                yield handler.call(this,next);  //执行控制器handler的call方法，来改变上下文
+
+                //上面控制器call方法运行完以后，继续执行下面
+                wechat.reply.call(this);    //回复
+
+                /*
                 if(message.MsgType === 'event'){        //POST过来的是一个事件
                     if(message.Event === 'subscribe'){  // 如果是订阅事件
                         var now = new Date().getTime();
                         
                         that.status = 200;
                         that.type = 'application/xml';
-                        that.body = '<xml>'+
-                            '<ToUserName><![CDATA['+ message.FromUserName + ']]></ToUserName>' +
-                            '<FromUserName><![CDATA['+ message.ToUserName + ']]></FromUserName>' +
-                            '<CreateTime>'+ now +'</CreateTime>' +
-                            '<MsgType><![CDATA[text]]></MsgType>' +
-                            '<Content><![CDATA[hi,你好!]]></Content>'+
-                            '</xml>';
+                        that.body = xml
                         return ;
                     }
                 }
+                */
+
+
             }
         }
 
