@@ -79,14 +79,16 @@ Wechat.prototype.updateAccessToken = function(){
                 resolve(data);
             })
     })
-}
+};
 
 Wechat.prototype.reply= function(){
     var content = this.body ;       //通过this渠道外层业务（因为是外层调用）
     var message = this.weixin;
 
+    console.log("&&&&&&&&&&&&&&&&&&&&&&&&");
+    console.log(content);
     var xml = util.tpl(content,message);    //采用util的方法（自己定义）获取到xml
-
+    console.log(xml);
     this.status = 200;
     this.type = 'application/xml';
     this.body = xml;

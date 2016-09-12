@@ -10,8 +10,8 @@ var util = require('./util');
 
 
 
-module.exports = function(opts){
-//    var wechat = new Wechat(opts); //new出的Wechat，管理票据和微信接口
+module.exports = function(opts,handler){
+    var wechat = new Wechat(opts); //new出的Wechat，管理票据和微信接口
     
     return function *(next){
         var that = this;
@@ -45,19 +45,21 @@ module.exports = function(opts){
                 
                 //新建一个util.js文件（工具包文件），存放常用的方法
                 //parseXMLAsync方法解析xml，返回一个解析后的xml的对象
-                var content = yield util.parseXMLAsync(data)    //parseXMLAsync方法返回一个Promise对象
+                var content = yield util.parseXMLAsync(data);    //parseXMLAsync方法返回一个Promise对象
                 console.log("$$$$$$$$$$$$$$$");
                 console.log(content);
                 
                 //上面返回的解析后的XML对象还不是标准的key-value的形式，所以还需要格式化
                 var message = util.formatMessage(content.xml);
                 console.log(message);
+                console.log('+++++++++++++++++++++++++++');
 
-                this.wexin= message;
+                this.weixin= message;
                 yield handler.call(this,next);  //执行控制器handler的call方法，来改变上下文
 
                 //上面控制器call方法运行完以后，继续执行下面
                 wechat.reply.call(this);    //回复
+                console.log("++++++++++++++");
 
                 /*
                 if(message.MsgType === 'event'){        //POST过来的是一个事件
