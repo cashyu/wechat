@@ -61,24 +61,8 @@ module.exports = function(opts,handler){
                 wechat.reply.call(this);    //回复
                 console.log("++++++++++++++");
 
-                /*
-                if(message.MsgType === 'event'){        //POST过来的是一个事件
-                    if(message.Event === 'subscribe'){  // 如果是订阅事件
-                        var now = new Date().getTime();
-                        
-                        that.status = 200;
-                        that.type = 'application/xml';
-                        that.body = xml
-                        return ;
-                    }
-                }
-                */
-
 
             }
         }
-
-        
-
     }
 };

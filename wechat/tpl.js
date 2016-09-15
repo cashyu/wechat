@@ -27,8 +27,8 @@ var tpl = heredoc(function(){/*
         </Video>
     <% } else if(msgType === 'music'){ %>
             <Music>
-                <Title><![CDATA[<%= content.TITLE %>]]></Title>
-                <Description><![CDATA[<%= content.DESCRIPTION %>]]></Description>
+                <Title><![CDATA[<%= content.title %>]]></Title>
+                <Description><![CDATA[<%= content.description %>]]></Description>
                 <MusicUrl><![CDATA[<%= content.musicUrl %>]]></MusicUrl>
                 <HQMusicUrl><![CDATA[<%= content.hqMusicUrl %>]]></HQMusicUrl>
                 <ThumbMediaId><![CDATA[<%= content.thumbMediaId %>]]></ThumbMediaId>

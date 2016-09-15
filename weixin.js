@@ -1,6 +1,12 @@
 'use strict'
 
-exports.reply = function *(next){   //ext用来向下传递流程
+var config = require('./config');
+var Wechat = require('./wechat/wechat');
+
+
+var wechatApi = new Wechat(config.wechat);
+
+exports.reply = function *(next){   //next用来向下传递流程
     var message = this.weixin;
 
     if(message.MsgType === 'event'){
@@ -51,6 +57,50 @@ exports.reply = function *(next){   //ext用来向下传递流程
                 picUrl:'http://ww1.sinaimg.cn/thumbnail/005AWTo8jw1f7le64nnxaj305z06iq35.jpg',
                 url:'https://nodejs.org/'
             }];
+        }else if(content === '5'){
+            var data = yield wechatApi.uploadMaterial('image',__dirname +
+                '/2.jpg');
+            reply = {
+                type:'image',
+                media_id:data.media_id
+            };
+        }else if(content === '6'){
+            var data = yield wechatApi.uploadMaterial('video',__dirname +
+                '/6.mp4');
+            reply = {
+                type:'video',
+                title:'回复视频测试',
+                description:'视频描述',
+                media_id:data.media_id
+            };
+        }else if(content === '7'){
+            var data = yield wechatApi.uploadMaterial('image',__dirname +
+                '/2.jpg');
+            reply = {
+                type:'music',
+                title:'回复音乐测试',
+                description:'音乐描述',
+                musicUrl:'http://mpge.5nd.com/2015/2015-9-12/66325/1.mp3',
+                thumbMediaId:data.media_id
+            };
+        }else if(content === '8') {
+            var data = yield wechatApi.uploadMaterial('image', __dirname +
+                '/2.jpg',{type:'image'});   //第三个参数permanent
+            reply = {
+                type: 'image',
+                media_id: data.media_id
+            };
+        }else if(content === '9') {
+            var data = yield wechatApi.uploadMaterial('', __dirname +
+                '/6.mp4',{type:'video',description:'{"title":"Really a nice place","introduction":"Never think it so easy"}'});   //第三个参数permanent
+            console.log("!!!!!!!!!!!!!!!!!");
+            console.log(data);
+            reply = {
+                type: 'video',
+                title:'回复视频',
+                description:'视频的描述信息',
+                media_id: data.media_id
+            };
         }
 
         this.body= reply;
