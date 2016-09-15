@@ -14,10 +14,14 @@ var api = {
     accessToken:prefix +
     'token?grant_type=client_credential',
     temporary:{
-        upload:prefix + 'media/upload?'
+        upload:prefix + 'media/upload?',    //上传临时素材
+        fetch:prefix + 'media/get?'       //获取临时素材
     },
     permanent:{
-        upload:prefix + 'material/add_material?',
+        upload:prefix + 'material/add_material?',   //上传永久素材
+        fetch:prefix + 'material/get_material?',    //获取永久素材
+        del:prefix + 'del_material?',               //删除永久素材
+        update:prefix + 'material/update_news?',    //更新永久素材
         uploadNews: prefix + 'material/add_news?',
         uploadNewsPic: prefix + 'media/uploadimg?'
     }
@@ -172,7 +176,7 @@ Wechat.prototype.uploadMaterial = function(type,material,permanent){
             }
 
             //通过request发起一个请求
-            request({method:'POST',url:url,formData:form,json:true})
+            request(options)
             .then(function(response){
                 var _data = response.body;
                 if(_data){
@@ -187,6 +191,100 @@ Wechat.prototype.uploadMaterial = function(type,material,permanent){
         });
     });
 };
+
+//mediaId:素材ID
+//type：素材类型
+//permanent:获取临时的还是永久的，如果permanent参数存在，则获取永久的
+Wechat.prototype.fecthMaterial = function(mediaId,type,permanent){
+    var that = this;
+    var fetchUrl = api.temporary.fetch;
+
+    if(permanent){
+        fetchUrl = api.permanent.fetch;
+    }
+
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = fetchUrl + 'access_token=' + data.access_token +
+                '&media_id=' + mediaId;
+            //如果临时的素材,且类型为video
+            if(!permanent && type === 'video'){
+                url = url.replace('https://','http://');//请注意，视频文件不支持https下载，调用该接口需http协议。
+            }
+
+            resolve(url);
+        });
+    });
+};
+
+//mediaId:素材ID
+Wechat.prototype.delMaterial = function(mediaId){
+    var that = this;
+    var form = {
+        media_id:mediaId
+    };
+
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.permanent.del + 'access_token=' + data.access_token +
+                '&media_id=' + mediaId;
+            //如果临时的素材,且类型为video
+            if(!permanent && type === 'vodeo'){
+                url = url.replace('https://','http://');//请注意，视频文件不支持https下载，调用该接口需http协议。
+            }
+
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{  //throw抛出异常
+                    throw new Error('Delete material fails');
+                }
+            })//catch捕获异常
+            .catch(function(err){
+                reject(err);
+            })
+        });
+    });
+};
+
+
+//mediaId:素材ID
+//news:改成什么样子
+Wechat.prototype.delMaterial = function(mediaId,news){
+    var that = this;
+    var form = {
+        media_id:mediaId
+    };
+
+    _.extend(form,news);    //form继承传进来的news
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.permanent.update + 'access_token=' + data.access_token +
+                '&media_id=' + mediaId;
+
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Delete material fails');
+                }
+            })
+        });
+    });
+};
+
 
 module.exports= Wechat;
 
