@@ -60,6 +60,7 @@ exports.reply = function *(next){   //next用来向下传递流程
         }else if(content === '5'){
             var data = yield wechatApi.uploadMaterial('image',__dirname +
                 '/2.jpg');
+
             reply = {
                 type:'image',
                 media_id:data.media_id
@@ -91,16 +92,55 @@ exports.reply = function *(next){   //next用来向下传递流程
                 media_id: data.media_id
             };
         }else if(content === '9') {
-            var data = yield wechatApi.uploadMaterial('', __dirname +
+            var data = yield wechatApi.uploadMaterial('video', __dirname +
                 '/6.mp4',{type:'video',description:'{"title":"Really a nice place","introduction":"Never think it so easy"}'});   //第三个参数permanent
-            console.log("!!!!!!!!!!!!!!!!!");
-            console.log(data);
+
             reply = {
                 type: 'video',
                 title:'回复视频',
                 description:'视频的描述信息',
                 media_id: data.media_id
             };
+        }else if(content === '10') {
+            console.log("####################");
+
+            //先获取图片对象
+            var picData = yield wechatApi.uploadMaterial('image', __dirname +
+                '/2.jpg',{});   //第三个参数为空对象，说明上传的为永久素材
+            //传永久素材的目的是为了拿到这个图片的素材ID，然后上传图文
+            console.log(picData.media_id);
+            console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            var media = {
+                articles :[{
+                    title:'tututu',
+                    thumb_media_id:picData.media_id,
+                    author:'Along',
+                    digest:'摘要',
+                    show_cover_pic:1,
+                    content:'没有内容',
+                    content_source_url:'https://github.com'
+                }]
+            };
+            //上传永久图文素材
+            data = yield wechatApi.uploadMaterial('news',media,{});
+            console.log(data);
+            //获取永久图文素材
+            data = yield wechatApi.fetchMaterial(data.media_id,'news',{});
+            console.log("@@@@@@@@@@@@@@@@@@@");
+            console.log(data);
+
+            var items = data.news_item;
+            var news = [];
+
+            items.forEach(function(item){
+                news.push({
+                    title:item.title,
+                    description:item.digest,
+                    picUrl:picData.url,
+                    url:item.url
+                });
+            });
+            reply = news;
         }
 
         this.body= reply;
