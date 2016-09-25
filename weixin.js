@@ -41,6 +41,7 @@ exports.reply = function *(next){   //next用来向下传递流程
         //指定回复策略，比如回复1时，公众号做什么操作，回复2时，公众号做另外的操作
         if(content === '1'){
             reply = '天下第一吃大米';
+
         }else if(content === '2'){
             reply = "天下第二吃豆腐"
         }else if(content === '3'){
@@ -104,15 +105,37 @@ exports.reply = function *(next){   //next用来向下传递流程
         }else if(content === '10') {
             console.log("####################");
 
-            //先获取图片对象
+            //上传永久图片素材，获取id
             var picData = yield wechatApi.uploadMaterial('image', __dirname +
                 '/2.jpg',{});   //第三个参数为空对象，说明上传的为永久素材
             //传永久素材的目的是为了拿到这个图片的素材ID，然后上传图文
-            console.log(picData.media_id);
-            console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^");
             var media = {
                 articles :[{
-                    title:'tututu',
+                    title:'tututu1',
+                    thumb_media_id:picData.media_id,
+                    author:'Along',
+                    digest:'摘要',
+                    show_cover_pic:1,
+                    content:'没有内容',
+                    content_source_url:'https://github.com'
+                },{
+                    title:'tututu2',
+                    thumb_media_id:picData.media_id,
+                    author:'Along',
+                    digest:'摘要',
+                    show_cover_pic:1,
+                    content:'没有内容',
+                    content_source_url:'https://github.com'
+                },{
+                    title:'tututu3',
+                    thumb_media_id:picData.media_id,
+                    author:'Along',
+                    digest:'摘要',
+                    show_cover_pic:1,
+                    content:'没有内容',
+                    content_source_url:'https://github.com'
+                },{
+                    title:'tututu4',
                     thumb_media_id:picData.media_id,
                     author:'Along',
                     digest:'摘要',
@@ -124,14 +147,12 @@ exports.reply = function *(next){   //next用来向下传递流程
             //上传永久图文素材
             data = yield wechatApi.uploadMaterial('news',media,{});
             console.log(data);
-            //获取永久图文素材
+            //获取永久图文素材的详细信息
             data = yield wechatApi.fetchMaterial(data.media_id,'news',{});
-            console.log("@@@@@@@@@@@@@@@@@@@");
-            console.log(data);
 
             var items = data.news_item;
             var news = [];
-
+            //将图文素材的信息拼成一个数组
             items.forEach(function(item){
                 news.push({
                     title:item.title,
@@ -141,6 +162,33 @@ exports.reply = function *(next){   //next用来向下传递流程
                 });
             });
             reply = news;
+        }else if(content === '11') {
+            var counts = yield wechatApi.countMaterial();
+            console.log(JSON.stringify(counts));
+            var results = yield[
+                wechatApi.batchMaterial({
+                    type:'image',
+                    offset:0,
+                    count:10
+                }),
+               wechatApi.batchMaterial({
+                    type:'video',
+                    offset:0,
+                    count:10
+                }),
+                wechatApi.batchMaterial({
+                    type:'voice',
+                    offset:0,
+                    count:10
+                }),
+                wechatApi.batchMaterial({
+                    type:'news',
+                    offset:0,
+                    count:10
+                })
+            ];
+            console.log(JSON.stringify(results));
+            reply = '1';
         }
 
         this.body= reply;

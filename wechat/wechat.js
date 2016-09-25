@@ -13,19 +13,28 @@ var prefix = 'https://api.weixin.qq.com/cgi-bin/';
 var api = {
     accessToken:prefix +
     'token?grant_type=client_credential',
-    temporary:{
+    temporary:{ //临时素材url
         upload:prefix + 'media/upload?',    //上传临时素材
         fetch:prefix + 'media/get?'       //获取临时素材
     },
-    permanent:{
+    permanent:{//永久素材url
         upload:prefix + 'material/add_material?',   //上传永久素材
         fetch:prefix + 'material/get_material?',    //获取永久素材
-        del:prefix + 'del_material?',               //删除永久素材
+        del:prefix + 'material/del_material?',               //删除永久素材
         update:prefix + 'material/update_news?',    //更新永久素材
-        count:prefix + 'get_materialcount?',        //获取永久素材的数量
+        count:prefix + 'material/get_materialcount?',        //获取永久素材的数量
         batch:prefix + 'material/batchget_material?',   //获取永久素材的列表
         uploadNews: prefix + 'material/add_news?',
         uploadNewsPic: prefix + 'media/uploadimg?'
+    },
+    group:{ //用户分组url
+        create: prefix + 'groups/create?',        //创建分组
+        fetch: prefix + 'groups/get?',        //查询分组
+        check: prefix + 'groups/getid?',        //查询用户所在分组
+        update: prefix + 'groups/update?',        //修改分组名
+        move: prefix + 'groups/members/update?',        //移动用户分组
+        batchupdate:prefix + 'groups/members/batchupdate?' , //批量移动用户分组
+        del:prefix + 'groups/delete?'       //删除分组
     }
 };
 
@@ -217,7 +226,6 @@ Wechat.prototype.fetchMaterial = function(mediaId,type,permanent){
                 url += '&media_id=' + mediaId;
                 resolve(url);
             }
-            console.log("%%%%%%%%%%%%%%%");
             if(type === 'news' || type === 'video'){
                 request(options)
                 .then(function(response){
@@ -269,6 +277,9 @@ Wechat.prototype.deleteMaterial = function(mediaId){
                     throw new Error('Delete material fails');
                 }
             })
+            .catch(function(err){
+                reject(err);
+            });
         });
     });
 };
@@ -285,22 +296,25 @@ Wechat.prototype.updateMaterial = function(mediaId,news){
     _.extend(form,news);    //form继承传进来的news
     return new Promise(function(resolve,reject){
         that
-            .fetchAccessToken()
-            .then(function(data){
-                var url = api.permanent.update + 'access_token=' + data.access_token +
-                    '&media_id=' + mediaId;
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.permanent.update + 'access_token=' + data.access_token +
+                '&media_id=' + mediaId;
 
-                //通过request发起一个请求
-                request({method:'POST',url:url,body:form,json:true})
-                    .then(function(response){
-                        var _data = response.body;
-                        if(_data){
-                            resolve(_data);
-                        }else{
-                            throw new Error('Update material fails');
-                        }
-                    })
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Update material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
             });
+        });
     });
 };
 
@@ -321,9 +335,12 @@ Wechat.prototype.countMaterial = function(){
                 if(_data){
                     resolve(_data);
                 }else{
-                    throw new Error('Update material fails');
+                    throw new Error('Count material fails');
                 }
             })
+            .catch(function(err){
+                reject(err);
+            });
         });
     });
 };
@@ -353,6 +370,202 @@ Wechat.prototype.batchMaterial = function(options){
                     throw new Error('Batch material fails');
                 }
             })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+
+//创建分组
+//name:组的名字
+Wechat.prototype.createGroup = function(name){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.get + 'access_token=' + data.access_token;
+            var form = {
+                group:{
+                    name:name
+                }
+            };
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Create group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//查询获取分组
+//name:组的名字
+Wechat.prototype.fetchGroup = function(){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.fetch + 'access_token=' + data.access_token;
+
+            //通过request发起一个请求
+            request({method:'GET',url:url,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Fetch group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//查询用户所在分组
+//openid:openid
+Wechat.prototype.checkGroup = function(openId){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.check + 'access_token=' + data.access_token;
+            var form = {
+                openid:openId
+            };
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Check group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//更新分组名字
+//id:微信给分组分配好的id（更新哪个分组）
+//name:组名
+Wechat.prototype.updateGroup = function(id,name){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.update + 'access_token=' + data.access_token;
+            var form = {
+                id:id,
+                name:name
+            };
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Update group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+
+/*  //将单个移动和批量移动 合并成了一个函数
+//将用户移动分组
+//openid:用户的openid
+//to:将用户移动到哪个分组
+Wechat.prototype.moveGroup = function(openId,to){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.move + 'access_token=' + data.access_token;
+            var form = {
+                group:{
+                    openid:openId,
+                    to_groupid:to
+                }
+            };
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Move group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+*/
+
+//批量将用户移动分组
+//openids:用户的openid数组
+//to:将用户移动到哪个分组
+Wechat.prototype.batchMoveGroup = function(openIds,to){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url;
+            var form = {
+                to_groupid:to
+            };
+            if(_.isArray(openIds)){
+                url = api.group.batchupdate + 'access_token=' + data.access_token;
+                form.openid_list = openIds;
+            }else{
+                url = api.group.move + 'access_token=' + data.access_token;
+                form.openid = openIds;
+            }
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Move group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
         });
     });
 };
