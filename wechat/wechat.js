@@ -35,6 +35,24 @@ var api = {
         move: prefix + 'groups/members/update?',        //移动用户分组
         batchupdate:prefix + 'groups/members/batchupdate?' , //批量移动用户分组
         del:prefix + 'groups/delete?'       //删除分组
+    },
+    user: {
+      remark: prefix + 'user/info/updateremark?',   //设置备注名
+      fetch: prefix + 'user/info?',
+      batchFetch: prefix + 'user/info/batchget?',
+      list: prefix + 'user/get?'    //获取用户列表
+    },
+    mass: {
+      group: prefix + 'message/mass/sendall?',    //分组群发
+      openid: prefix + 'message/mass/send?',
+      del: prefix + 'message/mass/delete?',
+      pre:prefix + 'message/mass/preview?'
+    },
+    menu: {
+      create: prefix + '/menu/create?',
+      get: prefix + 'menu/get?',
+      del: prefix + 'menu/delete?',
+      current: prefix + 'get_current_selfmenu_info?',
     }
 };
 
@@ -174,7 +192,6 @@ Wechat.prototype.uploadMaterial = function(type,material,permanent){
             }else {
                 options.formData = form;
             }
-
             //通过request发起一个请求
             request(options)
             .then(function(response){
@@ -386,14 +403,14 @@ Wechat.prototype.createGroup = function(name){
         that
         .fetchAccessToken()
         .then(function(data){
-            var url = api.group.get + 'access_token=' + data.access_token;
+            var url = api.group.create + 'access_token=' + data.access_token;
             var form = {
                 group:{
                     name:name
                 }
             };
             //通过request发起一个请求
-            request({method:'POST',url:url,body:form,json:true})
+            request({method:'POST' ,url:url, body:form, json:true})
             .then(function(response){
                 var _data = response.body;
                 if(_data){
@@ -468,17 +485,22 @@ Wechat.prototype.checkGroup = function(openId){
 //更新分组名字
 //id:微信给分组分配好的id（更新哪个分组）
 //name:组名
-Wechat.prototype.updateGroup = function(id,name){
+Wechat.prototype.updateGroup = function(id, name){
     var that = this;
+
     return new Promise(function(resolve,reject){
         that
         .fetchAccessToken()
         .then(function(data){
             var url = api.group.update + 'access_token=' + data.access_token;
             var form = {
+              group:{
                 id:id,
                 name:name
+              }
             };
+            console.log("dddddddddddddddddddddddddd");
+            console.log(form)
             //通过request发起一个请求
             request({method:'POST',url:url,body:form,json:true})
             .then(function(response){
@@ -570,16 +592,287 @@ Wechat.prototype.batchMoveGroup = function(openIds,to){
     });
 };
 
+//删除分组
+Wechat.prototype.deleteGroup = function(id){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.group.del + 'access_token=' + data.access_token;
+            var form = {
+                group: {
+                  id: id
+                }
+            };
+            
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('Delete group material fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//设置备注名
+Wechat.prototype.remarkGroup = function(openid, remark){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.user.remark + 'access_token=' + data.access_token;
+            var form = {
+              openid: openid,
+              remark: remark
+            };
+            
+            //通过request发起一个请求
+            request({method:'POST',url:url,body:form,json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('remark user fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//
+Wechat.prototype.fetchUsers = function(openIds, lang){
+    var that = this;
+    lang = lang || 'zh_CN';
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            let options = {
+              json: true,
+            } 
+            if(_.isArray(openIds)) {
+              options.url = api.user.batchFetch + 'access_token=' + data.access_token;
+              options.body = {
+                user_list: openIds
+              };
+              options.method = 'POST';
+            }else {
+              options.url = api.user.fetch + 'access_token=' + data.access_token + 
+                '&openid=' + openIds + '&lang=' + lang; 
+            }
+            //通过request发起一个请求
+            request(options)
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('batch fetch user fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//获取用户列表
+Wechat.prototype.listUser = function(openId){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.user.list + 'access_token=' + data.access_token;
+            if(openId) {
+              url += '&next_openid' + openId;
+            }
+            
+            //通过request发起一个请求
+            request({method:'GET', url:url, json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('list user fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//获取用户列表
+Wechat.prototype.senbByGroup = function(type, message, groupid){
+    var that = this;
+    let msg = {
+      filter: {},
+      msgtype: type
+    }
+
+    msg[type] = message;
+      
+    if(!groupid) {
+      msg.filter.is_to_all = false;
+    }else{
+      msg.filter = {
+        is_to_all:false,
+        group_id:groupid
+      }
+    }
+    console.log("vvvvvvvvvvvvvvvvvvvvvvvvv");
+    console.log(msg)
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.mass.group + 'access_token=' + data.access_token;
+            
+            //通过request发起一个请求
+            request({method:'POST', url:url, body:msg, json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('send group user fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+//
+Wechat.prototype.senbByOpenId = function(type, message, openid){
+    var that = this;
+    let msg = {
+      touser: openIds,
+      msgtype: type
+    }
+
+    msg[type] = message;
+      
+    console.log("vvvvvvvvvvvvvvvvvvvvvvvvv");
+    console.log(msg)
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.mass.openid + 'access_token=' + data.access_token;
+            
+            //通过request发起一个请求
+            request({method:'POST', url:url, body:msg, json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('send openid user fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+Wechat.prototype.deleteMass = function(msgId){
+    var that = this;
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.mass.del + 'access_token=' + data.access_token;
+            
+           let form = {
+            msg_id: msgId
+           } 
+            //通过request发起一个请求
+            request({method:'POST', url:url, body:msg, json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('delete Mass fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+Wechat.prototype.previewMass = function(type, message, openid){
+    var that = this;
+    let msg = {
+      touser: openid,
+      msgtype: type
+    };
+
+    msg[type] = message;
+    
+    console.log("hhhhhhhhhhhhhhhhhhhhhhhhhhh");
+    console.log(msg)
+    return new Promise(function(resolve,reject){
+        that
+        .fetchAccessToken()
+        .then(function(data){
+            var url = api.mass.pre + 'access_token=' + data.access_token;
+            
+            //通过request发起一个请求
+            request({method:'POST', url:url, body:msg, json:true})
+            .then(function(response){
+                var _data = response.body;
+                if(_data){
+                    resolve(_data);
+                }else{
+                    throw new Error('preview Mass fails');
+                }
+            })
+            .catch(function(err){
+                reject(err);
+            });
+        });
+    });
+};
+
+
+
+
 Wechat.prototype.reply= function(){
     var content = this.body ;       //通过this渠道外层业务（因为是外层调用）
     var message = this.weixin;
 
-
     var xml = util.tpl(content,message);    //采用util的方法（自己定义）获取到xml
-    console.log(xml);
     this.status = 200;
     this.type = 'application/xml';
     this.body = xml;
+    console.log("333333333333333333333333333333333333333333");
+    console.log(this.body)
 };
 
 module.exports= Wechat;

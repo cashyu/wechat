@@ -24,7 +24,6 @@ module.exports = function(opts,handler){
         var echostr = this.query.echostr;
         var str = [token,timestamp,nonce].sort().join('');
         var sha = sha1(str);
-
         if(this.method === 'GET'){
             if(sha === signature){
                 this.body = echostr + '';
@@ -42,7 +41,6 @@ module.exports = function(opts,handler){
                     limit:'1mb',    //最大post过来数据的大小
                     encoding:this.charset   //编码，设置为当前的charset
                 });
-                
                 //新建一个util.js文件（工具包文件），存放常用的方法
                 //parseXMLAsync方法解析xml，返回一个解析后的xml的对象
                 var content = yield util.parseXMLAsync(data);    //parseXMLAsync方法返回一个Promise对象
@@ -56,11 +54,9 @@ module.exports = function(opts,handler){
 
                 this.weixin= message;
                 yield handler.call(this,next);  //执行控制器handler的call方法，来改变上下文
-
+                
                 //上面控制器call方法运行完以后，继续执行下面
                 wechat.reply.call(this);    //回复
-                console.log("++++++++++++++");
-
 
             }
         }

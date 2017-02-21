@@ -53,7 +53,6 @@ exports.tpl = function(content,message){
     var type = 'text';
     var fromUsername = message.FromUserName;
     var toUsername = message.ToUserName;
-
     if(Array.isArray(content)){ //如果是数组,将类型改为news
         type = 'news';
     }

@@ -59,8 +59,11 @@ exports.reply = function *(next){   //next用来向下传递流程
                 url:'https://nodejs.org/'
             }];
         }else if(content === '5'){
+            console.log("2222222222222222222222222");
+            console.log(__dirname)
             var data = yield wechatApi.uploadMaterial('image',__dirname +
                 '/2.jpg');
+            console.log(data)
 
             reply = {
                 type:'image',
@@ -187,10 +190,91 @@ exports.reply = function *(next){   //next用来向下传递流程
                     count:10
                 })
             ];
+            console.log("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
             console.log(JSON.stringify(results));
             reply = '1';
-        }
+        }else if(content === '12') {
+          let group = yield wechatApi.createGroup('wechat3');
+          console.log('新分组wechat3');
+          console.log(group);
 
+          let groups = yield wechatApi.fetchGroup()
+          console.log('加了wechat后的分组列表');
+          console.log(groups);
+
+          let group2 = yield wechatApi.checkGroup(message.FromUserName);
+          console.log(message.FromUserName);
+          console.log('查看自己的分组');
+          console.log(group2);
+          
+          let result = yield wechatApi.batchMoveGroup(message.FromUserName, 101);
+          
+          console.log('移动到，１００');
+          console.log(result);
+
+          let groups2 = yield wechatApi.fetchGroup()
+          console.log('移动后的分组列表');
+          console.log(group2);
+
+          let result3 = yield wechatApi.updateGroup(103, 'test2_modify2');
+          console.log('102　wechat　改名　wechatfff');
+          console.log(result3);
+        
+
+          let groups3 = yield wechatApi.fetchGroup()
+          console.log('改名后的分组列表');
+          console.log(groups3);
+          
+          reply = 'Group done!'
+        } else if(content === '13') {
+          let user = yield wechatApi.fetchUsers(message.FromUserName);
+          console.log('获取当前用户')
+          console.log(user);
+
+          let openIds = [
+            {
+              openid: message.FromUserName,
+              lang: 'en'
+            }
+          ];
+          let users = yield wechatApi.fetchUsers(openIds);
+          console.log('批量获取用户信息')
+          console.log(users);
+
+          reply = JSON.stringify(user);
+        }else if(content === '14') {
+          let userlist = yield wechatApi.listUser(message.FromUserName);
+          console.log('获取用户列表');
+          console.log(userlist);
+          reply = userlist.total;
+        }else if (content === '15') {
+          let mpnews = {
+            media_id: 'R4T7V9cIsFNdOYx4cxXY_WXG1QyRlZ9Vq-9Y9lQIuYE' 
+          };
+
+          let text = {
+            content:'Hello Wechat'
+          }
+          let msgData = yield wechatApi.senbByGroup('mpnews', mpnews,101);
+          //let msgData = yield wechatApi.senbByGroup('text', text,101);
+
+          console.log('向101组群发消息！');
+          console.log(msgData);
+          reply = 'Yearh!'
+        }else if(content === '16') {
+          let mpnews = {
+            media_id: 'R4T7V9cIsFNdOYx4cxXY_WXG1QyRlZ9Vq-9Y9lQIuYE' 
+          };
+          let text = {
+            content:'Hello Wechat'
+          }
+          //let msgData = yield wechatApi.previewMass('mpnews', mpnews, message.FromUserName);
+          let msgData = yield wechatApi.previewMass('text', text, message.FromUserName);
+          console.log('向101组群发消息！');
+          console.log(msgData);
+          reply = 'Yearh!'
+          
+        }
         this.body= reply;
     }
 
