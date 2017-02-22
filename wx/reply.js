@@ -3,8 +3,18 @@
 var config = require('../config');
 var Wechat = require('../wechat/wechat');
 let path = require('path');
+let menu = require('./menu');
 
 var wechatApi = new Wechat(config.wechat);
+
+
+wechatApi.deleteMenu().then(function() {
+  console.log("ffffffffffffffffffffffffffffffff")
+  return wechatApi.createMenu(menu);
+}).then(function(msg) {
+  console.log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+  console.log(msg)
+});
 
 exports.reply = function *(next){   //next用来向下传递流程
     var message = this.weixin;
@@ -25,14 +35,40 @@ exports.reply = function *(next){   //next用来向下传递流程
                 message.Longitude + '-' + message.Precision;
             //点击了菜单
         }else if(message.Event === 'CLICK'){
-            this.body = '您 了菜单：' + message.EventKey;
+            this.body = '您点击了菜单：' + message.EventKey;
             //扫描
-        }else if(message.event === 'SCAN') {
+        }else if(message.Event === 'SCAN') {
             console.log('关注后扫二维码' + message.EventKey + ' ' +
                 message.Ticket);
             this.body = "看到你扫一下哦";
         }else if(message.Event === 'VIEW'){
             this.body = '您点击了菜单中的链接:' + message.EventKey;
+        }else if(message.Event === 'scancode_push') {
+          console.log("1111111111111111111111");
+          console.log(message.ScanCodeInfo.ScanType);
+          console.log(message.ScanCodeInfo.ScanResult);
+          this.body = '您点击了菜单中的:' + message.EventKey;
+        }else if(message.Event === 'scancode_waitmsg') {
+          console.log("2222222222222222222222");
+          console.log(message.ScanCodeInfo.ScanType);
+          console.log(message.ScanCodeInfo.ScanResult);
+          this.body = '您点击了菜单中的:' + message.EventKey;
+        }else if(message.Event === 'pic_sysphoto') {
+          console.log("3333333333333333333333");
+          console.log(message.SendPicsInfo.Count)
+          console.log(message.SendPicsInfo.cListt)
+          console.log(message.SendPicsInfo.PicMd5Sum)
+          this.body = '您点击了菜单中的:' + message.EventKey;
+        }else if(message.Event === 'pic_photo_or_album') {
+          console.log("4444444444444444444444");
+          console.log(message.SendPicsInfo.Count)
+          console.log(message.SendPicsInfo.cListt)
+          console.log(message.SendPicsInfo.PicMd5Sum)
+          this.body = '您点击了菜单中的:' + message.EventKey;
+        }else if(message.Event === 'pic_weixin') {
+          this.body = '您点击了菜单中的:' + message.EventKey;
+        }else if(message.Event === 'location_select') {
+          this.body = '您点击了菜单中的:' + message.EventKey;
         }
     }else {   //如果是文本类型
         var content = message.Content;
@@ -59,8 +95,10 @@ exports.reply = function *(next){   //next用来向下传递流程
                 url:'https://nodejs.org/'
             }];
         }else if(content === '5'){
+            console.log("2222222222222222222222222");
+            console.log(__dirname)
             var data = yield wechatApi.uploadMaterial('image',path.join(__dirname,
-                '/2.jpg'));
+                '../2.jpg'));
             console.log(data)
 
             reply = {
@@ -69,7 +107,7 @@ exports.reply = function *(next){   //next用来向下传递流程
             };
         }else if(content === '6'){
             var data = yield wechatApi.uploadMaterial('video',path.join(__dirname,
-                '/6.mp4'));
+                '../6.mp4'));
             reply = {
                 type:'video',
                 title:'回复视频测试',
@@ -78,7 +116,7 @@ exports.reply = function *(next){   //next用来向下传递流程
             };
         }else if(content === '7'){
             var data = yield wechatApi.uploadMaterial('image',path.join(__dirname,
-                '/2.jpg'));
+                '../2.jpg'));
             reply = {
                 type:'music',
                 title:'回复音乐测试',
@@ -88,14 +126,14 @@ exports.reply = function *(next){   //next用来向下传递流程
             };
         }else if(content === '8') {
             var data = yield wechatApi.uploadMaterial('image', path.join(__dirname,
-                '/2.jpg'),{type:'image'});   //第三个参数permanent
+                '../2.jpg'),{type:'image'});   //第三个参数permanent
             reply = {
                 type: 'image',
                 media_id: data.media_id
             };
         }else if(content === '9') {
             var data = yield wechatApi.uploadMaterial('video', path.join(__dirname,
-                '/6.mp4'),{type:'video',description:'{"title":"Really a nice place","introduction":"Never think it so easy"}'});   //第三个参数permanent
+                '../6.mp4'),{type:'video',description:'{"title":"Really a nice place","introduction":"Never think it so easy"}'});   //第三个参数permanent
 
             reply = {
                 type: 'video',
@@ -108,7 +146,7 @@ exports.reply = function *(next){   //next用来向下传递流程
 
             //上传永久图片素材，获取id
             var picData = yield wechatApi.uploadMaterial('image', path.join(__dirname,
-                '/2.jpg'),{});   //第三个参数为空对象，说明上传的为永久素材
+                '../2.jpg'),{});   //第三个参数为空对象，说明上传的为永久素材
             //传永久素材的目的是为了拿到这个图片的素材ID，然后上传图文
             var media = {
                 articles :[{
@@ -272,6 +310,51 @@ exports.reply = function *(next){   //next用来向下传递流程
           console.log(msgData);
           reply = 'Yearh!'
           
+        }else if(content === '18') {
+          let tempQr = {
+            expire_seconds:400000,
+            action_name:'QR_SCENE',
+            action_info:{
+              scene: {
+                scene_id: 123
+              }
+            }
+          };
+          let permQr = {
+            action_name:'QR_LIMIT_SCENE',
+            action_info:{
+              scene: {
+                scene_id: 123
+              }
+            }
+          };
+          let permQrStr = {
+            action_name:'QR_LIMIT_STR_SCENE',
+            action_info:{
+              scene: {
+                scene_id: 'abc'
+              }
+            }
+          };
+
+          let qr1 = yield wechatApi.createQrcode(tempQr);
+          let qr2 = yield wechatApi.createQrcode(permQr);
+          let qr3 = yield wechatApi.createQrcode(permQrStr);
+          reply = 'Yeah hah!';
+        }else if(content === '19') {
+          let longUrl = 'http://www.imooc.com' ;
+          let shortData = yield wechatApi.createShortUrl(null, longUrl);
+
+          reply = shortData.short_url;
+        }else if(content === '20') {
+          let semanticData = {
+            "query":"查一下明天从北京到上海的南航机票",
+            "city":"深圳",
+            "category": "move",
+            "uid":message.FromUserName
+          };
+          let _semanticData = yield wechatApi.semantic(semanticData);
+          reply = JSON.stringify(_semanticData);
         }
         this.body= reply;
     }
